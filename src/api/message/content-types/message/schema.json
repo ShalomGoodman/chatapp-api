@@ -1,0 +1,35 @@
+{
+  "kind": "collectionType",
+  "collectionName": "messages",
+  "info": {
+    "singularName": "message",
+    "pluralName": "messages",
+    "displayName": "Message",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "user": {
+      "type": "string",
+      "required": true
+    },
+    "message": {
+      "type": "string",
+      "required": true
+    },
+    "chatroom": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::chatroom.chatroom",
+      "inversedBy": "messages"
+    },
+    "active_user": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::active-user.active-user"
+    }
+  }
+}

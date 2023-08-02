@@ -1,0 +1,32 @@
+{
+  "kind": "collectionType",
+  "collectionName": "active_users",
+  "info": {
+    "singularName": "active-user",
+    "pluralName": "active-users",
+    "displayName": "active user",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "users": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "socketid": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "chatrooms": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::chatroom.chatroom",
+      "mappedBy": "active_users"
+    }
+  }
+}
