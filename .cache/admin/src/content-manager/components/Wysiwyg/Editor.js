@@ -1,11 +1,15 @@
 import React, { useEffect, useRef } from 'react';
+
+import CodeMirror from 'codemirror5';
 import PropTypes from 'prop-types';
-import CodeMirror from 'codemirror';
-import 'codemirror/addon/display/placeholder';
+
 import PreviewWysiwyg from '../PreviewWysiwyg';
+
 import { EditorStylesContainer } from './EditorStylesContainer';
-import { EditorAndPreviewWrapper } from './WysiwygStyles';
 import newlineAndIndentContinueMarkdownList from './utils/continueList';
+import { EditorAndPreviewWrapper } from './WysiwygStyles';
+
+import 'codemirror5/addon/display/placeholder';
 
 const Editor = ({
   disabled,
@@ -32,16 +36,18 @@ const Editor = ({
       readOnly: false,
       smartIndent: false,
       placeholder,
+      spellcheck: true,
+      inputStyle: 'contenteditable',
     });
 
     CodeMirror.commands.newlineAndIndentContinueMarkdownList = newlineAndIndentContinueMarkdownList;
-    editorRef.current.on('change', doc => {
+    editorRef.current.on('change', (doc) => {
       onChangeRef.current({ target: { name, value: doc.getValue(), type: 'wysiwyg' } });
     });
   }, [editorRef, textareaRef, name, placeholder]);
 
   useEffect(() => {
-    if (value && !editorRef.current.state.focused) {
+    if (value && !editorRef.current.hasFocus()) {
       editorRef.current.setValue(value);
     }
   }, [editorRef, value]);

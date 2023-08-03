@@ -5,13 +5,10 @@
  *
  */
 import React from 'react';
-import { useFocusWhenNavigate } from '@strapi/helper-plugin';
-import { Main } from '@strapi/design-system/Main';
-import { LinkButton } from '@strapi/design-system/LinkButton';
-import { ContentLayout, HeaderLayout } from '@strapi/design-system/Layout';
-import { EmptyStateLayout } from '@strapi/design-system/EmptyStateLayout';
-import EmptyPictures from '@strapi/icons/EmptyPictures';
-import ArrowRight from '@strapi/icons/ArrowRight';
+
+import { ContentLayout, EmptyStateLayout, HeaderLayout, Main } from '@strapi/design-system';
+import { LinkButton, useFocusWhenNavigate } from '@strapi/helper-plugin';
+import { ArrowRight, EmptyPictures } from '@strapi/icons';
 import { useIntl } from 'react-intl';
 
 const NoContentType = () => {

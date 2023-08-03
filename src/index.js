@@ -1,7 +1,8 @@
+require('regenerator-runtime/runtime');
 "use strict";
 
 const axios = require("axios");
-require('regenerator-runtime/runtime');
+
 
 module.exports = {
   bootstrap(/* { strapi } */) {
