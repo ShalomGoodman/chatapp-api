@@ -44,7 +44,7 @@ module.exports = {
         };
 
         await axios
-          .post("http://localhost:1337/api/active-users", strapiData)
+          .post("https://sos-chat-app-backend-ec89bfddc114.herokuapp.com/api/active-users", strapiData)
           .then(async (e) => {
             socket.emit("roomData", { done: "true" });
           })
@@ -72,7 +72,7 @@ module.exports = {
         };
       
         await axios
-          .post("http://localhost:1337/api/messages", strapiData)
+          .post("https://sos-chat-app-backend-ec89bfddc114.herokuapp.com/api/messages", strapiData)
           .then((e) => {
             socket.broadcast.to(chatroom).emit("message", {
               user: user,
