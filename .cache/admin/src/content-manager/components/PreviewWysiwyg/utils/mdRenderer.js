@@ -1,6 +1,6 @@
 /* eslint-disable prefer-template */
+import { getLanguage, highlight, highlightAuto } from 'highlight.js';
 import Markdown from 'markdown-it';
-import { getLanguage, highlightAuto, highlight } from 'highlight.js';
 import abbr from 'markdown-it-abbr';
 import container from 'markdown-it-container';
 import deflist from 'markdown-it-deflist';
@@ -25,7 +25,7 @@ const md = new Markdown({
   linkify: true,
   typographer: true,
   // Code from: https://github.com/markdown-it/markdown-it/blob/master/support/demo_template/index.js#L83
-  highlight: (str, lang) => {
+  highlight(str, lang) {
     if (lang && lang !== 'auto' && getLanguage(lang)) {
       return (
         '<pre class="hljs language-' +

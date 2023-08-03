@@ -1,41 +1,37 @@
-import React, { useState, useEffect } from 'react';
-import { useIntl } from 'react-intl';
-import styled from 'styled-components';
-import get from 'lodash/get';
-import omit from 'lodash/omit';
-import { Box } from '@strapi/design-system/Box';
-import { Stack } from '@strapi/design-system/Stack';
-import { Main } from '@strapi/design-system/Main';
-import { Flex } from '@strapi/design-system/Flex';
-import { Link } from '@strapi/design-system/Link';
-import { Button } from '@strapi/design-system/Button';
-import { TextInput } from '@strapi/design-system/TextInput';
-import { Checkbox } from '@strapi/design-system/Checkbox';
-import { Grid, GridItem } from '@strapi/design-system/Grid';
-import { Typography } from '@strapi/design-system/Typography';
-import EyeStriked from '@strapi/icons/EyeStriked';
-import Eye from '@strapi/icons/Eye';
+import React, { useEffect, useState } from 'react';
+
+import {
+  Box,
+  Button,
+  Checkbox,
+  Flex,
+  Grid,
+  GridItem,
+  Main,
+  TextInput,
+  Typography,
+} from '@strapi/design-system';
 import {
   Form,
-  useQuery,
-  useNotification,
-  useTracking,
   getYupInnerErrors,
+  Link,
+  useAPIErrorHandler,
+  useFetchClient,
+  useNotification,
+  useQuery,
+  useTracking,
 } from '@strapi/helper-plugin';
-import { useHistory } from 'react-router-dom';
-import PropTypes from 'prop-types';
+import { Eye, EyeStriked } from '@strapi/icons';
 import { Formik } from 'formik';
-import axios from 'axios';
-import UnauthenticatedLayout, {
-  Column,
-  LayoutContent,
-} from '../../../../layouts/UnauthenticatedLayout';
-import Logo from '../../../../components/UnauthenticatedLogo';
-import FieldActionWrapper from '../FieldActionWrapper';
+import omit from 'lodash/omit';
+import PropTypes from 'prop-types';
+import { useIntl } from 'react-intl';
+import { useHistory } from 'react-router-dom';
+import styled from 'styled-components';
 
-const CenteredBox = styled(Box)`
-  text-align: center;
-`;
+import Logo from '../../../../components/UnauthenticatedLogo';
+import UnauthenticatedLayout, { LayoutContent } from '../../../../layouts/UnauthenticatedLayout';
+import FieldActionWrapper from '../FieldActionWrapper';
 
 const A = styled.a`
   color: ${({ theme }) => theme.colors.primary600};
@@ -57,6 +53,9 @@ const Register = ({ authType, fieldsToDisable, noSignin, onSubmit, schema }) => 
   const { trackUsage } = useTracking();
   const { formatMessage } = useIntl();
   const query = useQuery();
+  const { formatAPIError } = useAPIErrorHandler();
+  const { get } = useFetchClient();
+
   const registrationToken = query.get('registrationToken');
 
   useEffect(() => {
@@ -65,24 +64,26 @@ const Register = ({ authType, fieldsToDisable, noSignin, onSubmit, schema }) => 
         try {
           const {
             data: { data },
-          } = await axios.get(
-            `${strapi.backendURL}/admin/registration-info?registrationToken=${registrationToken}`
-          );
+          } = await get(`/admin/registration-info`, {
+            params: {
+              registrationToken,
+            },
+          });
 
           if (data) {
             setUserInfo(data);
           }
-        } catch (err) {
-          const errorMessage = get(err, ['response', 'data', 'message'], 'An error occurred');
+        } catch (error) {
+          const message = formatAPIError(error);
 
           toggleNotification({
             type: 'warning',
-            message: errorMessage,
+            message,
           });
 
           // Redirect to the oops page in case of an invalid token
           // @alexandrebodin @JAB I am not sure it is the wanted behavior
-          push(`/auth/oops?info=${encodeURIComponent(errorMessage)}`);
+          push(`/auth/oops?info=${encodeURIComponent(message)}`);
         }
       };
 
@@ -90,6 +91,20 @@ const Register = ({ authType, fieldsToDisable, noSignin, onSubmit, schema }) => 
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [registrationToken]);
+
+  function normalizeData(data) {
+    return Object.entries(data).reduce((acc, [key, value]) => {
+      let normalizedvalue = value;
+
+      if (!['password', 'confirmPassword'].includes(key) && typeof value === 'string') {
+        normalizedvalue = normalizedvalue.trim();
+      }
+
+      acc[key] = normalizedvalue;
+
+      return acc;
+    }, {});
+  }
 
   return (
     <UnauthenticatedLayout>
@@ -106,8 +121,10 @@ const Register = ({ authType, fieldsToDisable, noSignin, onSubmit, schema }) => 
             news: false,
           }}
           onSubmit={async (data, formik) => {
+            const normalizedData = normalizeData(data);
+
             try {
-              await schema.validate(data, { abortEarly: false });
+              await schema.validate(normalizedData, { abortEarly: false });
 
               if (submitCount > 0 && authType === 'register-admin') {
                 trackUsage('didSubmitWithErrorsFirstAdmin', { count: submitCount.toString() });
@@ -116,11 +133,11 @@ const Register = ({ authType, fieldsToDisable, noSignin, onSubmit, schema }) => 
               if (registrationToken) {
                 // We need to pass the registration token in the url param to the api in order to submit another admin user
                 onSubmit(
-                  { userInfo: omit(data, ['registrationToken']), registrationToken },
+                  { userInfo: omit(normalizedData, ['registrationToken']), registrationToken },
                   formik
                 );
               } else {
-                onSubmit(data, formik);
+                onSubmit(normalizedData, formik);
               }
             } catch (err) {
               const errors = getYupInnerErrors(err);
@@ -137,27 +154,26 @@ const Register = ({ authType, fieldsToDisable, noSignin, onSubmit, schema }) => 
             return (
               <Form noValidate>
                 <Main>
-                  <Column>
+                  <Flex direction="column" alignItems="center" gap={3}>
                     <Logo />
-                    <Box paddingTop={6} paddingBottom={1}>
-                      <Typography as="h1" variant="alpha">
-                        {formatMessage({
-                          id: 'Auth.form.welcome.title',
-                          defaultMessage: 'Welcome!',
-                        })}
-                      </Typography>
-                    </Box>
-                    <CenteredBox paddingBottom={7}>
-                      <Typography variant="epsilon" textColor="neutral600">
-                        {formatMessage({
-                          id: 'Auth.form.register.subtitle',
-                          defaultMessage:
-                            'Your credentials are only used to authenticate yourself on the admin panel. All saved data will be stored in your own database.',
-                        })}
-                      </Typography>
-                    </CenteredBox>
-                  </Column>
-                  <Stack spacing={7}>
+
+                    <Typography as="h1" variant="alpha" textAlign="center">
+                      {formatMessage({
+                        id: 'Auth.form.welcome.title',
+                        defaultMessage: 'Welcome to Strapi!',
+                      })}
+                    </Typography>
+
+                    <Typography variant="epsilon" textColor="neutral600" textAlign="center">
+                      {formatMessage({
+                        id: 'Auth.form.register.subtitle',
+                        defaultMessage:
+                          'Credentials are only used to authenticate in Strapi. All saved data will be stored in your database.',
+                      })}
+                    </Typography>
+                  </Flex>
+
+                  <Flex direction="column" alignItems="stretch" gap={6} marginTop={7}>
                     <Grid gap={4}>
                       <GridItem col={6}>
                         <TextInput
@@ -203,11 +219,10 @@ const Register = ({ authType, fieldsToDisable, noSignin, onSubmit, schema }) => 
                       value={values.password}
                       error={errors.password ? formatMessage(errors.password) : undefined}
                       endAction={
-                        // eslint-disable-next-line react/jsx-wrap-multilines
                         <FieldActionWrapper
-                          onClick={e => {
+                          onClick={(e) => {
                             e.preventDefault();
-                            setPasswordShown(prev => !prev);
+                            setPasswordShown((prev) => !prev);
                           }}
                           label={formatMessage(
                             passwordShown
@@ -227,11 +242,11 @@ const Register = ({ authType, fieldsToDisable, noSignin, onSubmit, schema }) => 
                       hint={formatMessage({
                         id: 'Auth.form.password.hint',
                         defaultMessage:
-                          'Password must contain at least 8 characters, 1 uppercase, 1 lowercase and 1 number',
+                          'Must be at least 8 characters, 1 uppercase, 1 lowercase & 1 number',
                       })}
                       required
                       label={formatMessage({
-                        id: 'Auth.form.password.label',
+                        id: 'global.password',
                         defaultMessage: 'Password',
                       })}
                       type={passwordShown ? 'text' : 'password'}
@@ -244,11 +259,10 @@ const Register = ({ authType, fieldsToDisable, noSignin, onSubmit, schema }) => 
                         errors.confirmPassword ? formatMessage(errors.confirmPassword) : undefined
                       }
                       endAction={
-                        // eslint-disable-next-line react/jsx-wrap-multilines
                         <FieldActionWrapper
-                          onClick={e => {
+                          onClick={(e) => {
                             e.preventDefault();
-                            setConfirmPasswordShown(prev => !prev);
+                            setConfirmPasswordShown((prev) => !prev);
                           }}
                           label={formatMessage(
                             confirmPasswordShown
@@ -268,12 +282,12 @@ const Register = ({ authType, fieldsToDisable, noSignin, onSubmit, schema }) => 
                       required
                       label={formatMessage({
                         id: 'Auth.form.confirmPassword.label',
-                        defaultMessage: 'Confirmation Password',
+                        defaultMessage: 'Confirm Password',
                       })}
                       type={confirmPasswordShown ? 'text' : 'password'}
                     />
                     <Checkbox
-                      onValueChange={checked => {
+                      onValueChange={(checked) => {
                         handleChange({ target: { value: checked, name: 'news' } });
                       }}
                       value={values.news}
@@ -284,7 +298,7 @@ const Register = ({ authType, fieldsToDisable, noSignin, onSubmit, schema }) => 
                         {
                           id: 'Auth.form.register.news.label',
                           defaultMessage:
-                            'Keep me updated about the new features and upcoming improvements (by doing this you accept the {terms} and the {policy}).',
+                            'Keep me updated about new features & upcoming improvements (by doing this you accept the {terms} and the {policy}).',
                         },
                         {
                           terms: (
@@ -312,7 +326,7 @@ const Register = ({ authType, fieldsToDisable, noSignin, onSubmit, schema }) => 
                         defaultMessage: "Let's start",
                       })}
                     </Button>
-                  </Stack>
+                  </Flex>
                 </Main>
               </Form>
             );
@@ -338,7 +352,7 @@ const Register = ({ authType, fieldsToDisable, noSignin, onSubmit, schema }) => 
 Register.defaultProps = {
   fieldsToDisable: [],
   noSignin: false,
-  onSubmit: e => e.preventDefault(),
+  onSubmit: (e) => e.preventDefault(),
 };
 
 Register.propTypes = {
