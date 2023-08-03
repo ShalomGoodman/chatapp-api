@@ -8,7 +8,7 @@ module.exports = {
   bootstrap(/* { strapi } */) {
     var io = require("socket.io")(strapi.server.httpServer, {
       cors: {
-        origin: "http://localhost:3000",
+        origin: "https://sos-chat-app-frontend-7416e786c22f.herokuapp.com",
         methods: ["GET", "POST"],
         allowedHeaders: ["my-custom-header"],
         credentials: true,
