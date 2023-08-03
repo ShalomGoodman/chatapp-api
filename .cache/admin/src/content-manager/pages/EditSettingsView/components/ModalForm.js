@@ -1,25 +1,31 @@
-import React, { useMemo, useCallback } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, useMemo } from 'react';
+
+import { GridItem, Option, Select } from '@strapi/design-system';
 import get from 'lodash/get';
-import { GridItem } from '@strapi/design-system/Grid';
-import { Select, Option } from '@strapi/design-system/Select';
-import { useSelector, shallowEqual } from 'react-redux';
+import PropTypes from 'prop-types';
 import { useIntl } from 'react-intl';
-import { useLayoutDnd } from '../../../hooks';
-import { createPossibleMainFieldsForModelsAndComponents, getInputProps } from '../utils';
-import { makeSelectModelAndComponentSchemas } from '../../App/selectors';
+import { shallowEqual, useSelector } from 'react-redux';
+
 import getTrad from '../../../utils/getTrad';
+import { makeSelectModelAndComponentSchemas, selectFieldSizes } from '../../App/selectors';
+import { useLayoutDnd } from '../hooks/useLayoutDnd';
+import { createPossibleMainFieldsForModelsAndComponents, getInputProps } from '../utils';
+
 import GenericInput from './GenericInput';
 
-const FIELD_SIZES = [[4, '33%'], [6, '50%'], [8, '66%'], [12, '100%']];
-
-const NON_RESIZABLE_FIELD_TYPES = ['dynamiczone', 'component', 'json', 'richtext'];
+const FIELD_SIZES = [
+  [4, '33%'],
+  [6, '50%'],
+  [8, '66%'],
+  [12, '100%'],
+];
 
 const ModalForm = ({ onMetaChange, onSizeChange }) => {
   const { formatMessage } = useIntl();
   const { modifiedData, selectedField, attributes, fieldForm } = useLayoutDnd();
   const schemasSelector = useMemo(makeSelectModelAndComponentSchemas, []);
-  const { schemas } = useSelector(state => schemasSelector(state), shallowEqual);
+  const { schemas } = useSelector((state) => schemasSelector(state), shallowEqual);
+  const fieldSizes = useSelector(selectFieldSizes);
 
   const formToDisplay = useMemo(() => {
     if (!selectedField) {
@@ -28,7 +34,7 @@ const ModalForm = ({ onMetaChange, onSizeChange }) => {
 
     const associatedMetas = get(modifiedData, ['metadatas', selectedField, 'edit'], {});
 
-    return Object.keys(associatedMetas).filter(meta => meta !== 'visible');
+    return Object.keys(associatedMetas).filter((meta) => meta !== 'visible');
   }, [selectedField, modifiedData]);
 
   const componentsAndModelsPossibleMainFields = useMemo(() => {
@@ -36,7 +42,7 @@ const ModalForm = ({ onMetaChange, onSizeChange }) => {
   }, [schemas]);
 
   const getSelectedItemSelectOptions = useCallback(
-    formType => {
+    (formType) => {
       if (formType !== 'relation' && formType !== 'component') {
         return [];
       }
@@ -50,12 +56,12 @@ const ModalForm = ({ onMetaChange, onSizeChange }) => {
     [selectedField, componentsAndModelsPossibleMainFields, modifiedData]
   );
 
-  const metaFields = formToDisplay.map(meta => {
+  const metaFields = formToDisplay.map((meta) => {
     const formType = get(attributes, [selectedField, 'type']);
 
     if (
-      formType === 'dynamiczone' ||
-      (formType === 'component' && !['label', 'description'].includes(meta))
+      ['component', 'dynamiczone'].includes(formType) &&
+      !['label', 'description'].includes(meta)
     ) {
       return null;
     }
@@ -65,6 +71,10 @@ const ModalForm = ({ onMetaChange, onSizeChange }) => {
     }
 
     if (['media', 'json', 'boolean'].includes(formType) && meta === 'placeholder') {
+      return null;
+    }
+
+    if (meta === 'step') {
       return null;
     }
 
@@ -91,34 +101,34 @@ const ModalForm = ({ onMetaChange, onSizeChange }) => {
     );
   });
 
-  const canResize = !NON_RESIZABLE_FIELD_TYPES.includes(attributes[selectedField].type);
-
-  const sizeField = (
-    <GridItem col={6} key="size">
-      <Select
-        value={fieldForm?.size}
-        name="size"
-        onChange={value => {
-          onSizeChange({ name: selectedField, value });
-        }}
-        label={formatMessage({
-          id: getTrad('containers.SettingPage.editSettings.size.label'),
-          defaultMessage: 'Size',
-        })}
-      >
-        {FIELD_SIZES.map(([value, label]) => (
-          <Option key={value} value={value}>
-            {label}
-          </Option>
-        ))}
-      </Select>
-    </GridItem>
-  );
+  // Check for a custom input provided by a custom field, or use the default one for that type
+  const { type, customField } = attributes[selectedField];
+  const { isResizable } = fieldSizes[customField] ?? fieldSizes[type];
 
   return (
     <>
       {metaFields}
-      {canResize && sizeField}
+      {isResizable && (
+        <GridItem col={6} key="size">
+          <Select
+            value={fieldForm?.size}
+            name="size"
+            onChange={(value) => {
+              onSizeChange({ name: selectedField, value });
+            }}
+            label={formatMessage({
+              id: getTrad('containers.SettingPage.editSettings.size.label'),
+              defaultMessage: 'Size',
+            })}
+          >
+            {FIELD_SIZES.map(([value, label]) => (
+              <Option key={value} value={value}>
+                {label}
+              </Option>
+            ))}
+          </Select>
+        </GridItem>
+      )}
     </>
   );
 };

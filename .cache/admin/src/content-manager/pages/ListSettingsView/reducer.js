@@ -1,6 +1,7 @@
 import produce from 'immer'; // current
-import set from 'lodash/set';
 import get from 'lodash/get';
+import set from 'lodash/set';
+
 import { arrayMoveItem } from '../../utils';
 
 const initialState = {
@@ -12,7 +13,7 @@ const initialState = {
 
 const reducer = (state = initialState, action) =>
   // eslint-disable-next-line consistent-return
-  produce(state, draftState => {
+  produce(state, (draftState) => {
     const layoutFieldListPath = ['modifiedData', 'layouts', 'list'];
     switch (action.type) {
       case 'ADD_FIELD': {

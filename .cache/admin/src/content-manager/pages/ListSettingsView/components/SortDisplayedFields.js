@@ -1,28 +1,20 @@
-import React, { useState, useRef, useEffect } from 'react';
-import styled from 'styled-components';
+import React, { useEffect, useRef, useState } from 'react';
+
+import { Box, Flex, VisuallyHidden, Typography } from '@strapi/design-system';
+import { Menu } from '@strapi/design-system/v2';
+import { Plus } from '@strapi/icons';
 import { PropTypes } from 'prop-types';
 import { useIntl } from 'react-intl';
-import { Box } from '@strapi/design-system/Box';
-import { Flex } from '@strapi/design-system/Flex';
-import { Stack } from '@strapi/design-system/Stack';
-import { Typography } from '@strapi/design-system/Typography';
-import { SimpleMenu, MenuItem } from '@strapi/design-system/SimpleMenu';
-import { IconButton } from '@strapi/design-system/IconButton';
-import Plus from '@strapi/icons/Plus';
-import DraggableCard from './DraggableCard';
+import styled from 'styled-components';
+
 import { getTrad } from '../../../utils';
 
-const FlexWrapper = styled(Box)`
-  flex: ${({ size }) => size};
-`;
+import DraggableCard from './DraggableCard';
 
-const ScrollableContainer = styled(FlexWrapper)`
+const ScrollableContainer = styled(Box)`
+  flex: ${({ size }) => size};
   overflow-x: scroll;
   overflow-y: hidden;
-`;
-
-const SelectContainer = styled(FlexWrapper)`
-  max-width: ${32 / 16}rem;
 `;
 
 const SortDisplayedFields = ({
@@ -75,7 +67,7 @@ const SortDisplayedFields = ({
         hasRadius
       >
         <ScrollableContainer size="1" paddingBottom={4} ref={scrollableContainerRef}>
-          <Stack horizontal spacing={3}>
+          <Flex gap={3}>
             {displayedFields.map((field, index) => (
               <DraggableCard
                 key={field}
@@ -83,32 +75,40 @@ const SortDisplayedFields = ({
                 isDraggingSibling={isDraggingSibling}
                 onMoveField={onMoveField}
                 onClickEditField={onClickEditField}
-                onRemoveField={e => handleRemoveField(e, index)}
+                onRemoveField={(e) => handleRemoveField(e, index)}
                 name={field}
                 labelField={metadatas[field].list.label || field}
                 setIsDraggingSibling={setIsDraggingSibling}
               />
             ))}
-          </Stack>
+          </Flex>
         </ScrollableContainer>
-        <SelectContainer size="auto" paddingBottom={4}>
-          <SimpleMenu
-            label={formatMessage({
-              id: getTrad('components.FieldSelect.label'),
-              defaultMessage: 'Add a field',
-            })}
-            as={IconButton}
-            icon={<Plus />}
+        <Menu.Root>
+          <Menu.Trigger
+            paddingLeft={2}
+            paddingRight={2}
+            justifyContent="center"
+            endIcon={null}
             disabled={listRemainingFields.length <= 0}
-            data-testid="add-field"
+            marginBottom={4}
+            variant="tertiary"
           >
-            {listRemainingFields.map(field => (
-              <MenuItem key={field} onClick={() => handleAddField(field)}>
-                {field}
-              </MenuItem>
+            <VisuallyHidden as="span">
+              {formatMessage({
+                id: getTrad('components.FieldSelect.label'),
+                defaultMessage: 'Add a field',
+              })}
+            </VisuallyHidden>
+            <Plus aria-hidden focusable={false} style={{ position: 'relative', top: 2 }} />
+          </Menu.Trigger>
+          <Menu.Content>
+            {listRemainingFields.map((field) => (
+              <Menu.Item key={field} onSelect={() => handleAddField(field)}>
+                {metadatas[field].list.label || field}
+              </Menu.Item>
             ))}
-          </SimpleMenu>
-        </SelectContainer>
+          </Menu.Content>
+        </Menu.Root>
       </Flex>
     </>
   );
