@@ -27,6 +27,12 @@
       "relation": "manyToMany",
       "target": "api::chatroom.chatroom",
       "mappedBy": "active_users"
+    },
+    "account": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::account.account",
+      "mappedBy": "active_user"
     }
   }
 }

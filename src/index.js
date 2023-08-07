@@ -19,7 +19,7 @@ module.exports = {
       // This holds the username and active chatroom for this connection
       const userState = { username: null, chatroom: null };
 
-      socket.on("join", async ({ username, chatroom }) => {
+      socket.on("join", async ({ username, chatroom, userId }) => {
         if (!username || !chatroom) {
           console.log("Missing username or chatroom for join event");
           return;
@@ -40,6 +40,7 @@ module.exports = {
             users: username,
             socketid: socket.id,
             chatrooms: [chatroom],  // assuming chatroom is the ID of the chatroom
+            account: userId // assuming account is the ID of the user
           },
         };
 
@@ -54,6 +55,9 @@ module.exports = {
             }
           });
       });
+
+
+      
 
       socket.on("sendMessage", async (data) => {
         const { user, message, chatroom } = data.data; // Extract properties from data.data
