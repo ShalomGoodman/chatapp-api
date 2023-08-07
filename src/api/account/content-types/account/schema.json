@@ -21,6 +21,12 @@
     },
     "token": {
       "type": "string"
+    },
+    "active_user": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::active-user.active-user",
+      "inversedBy": "account"
     }
   }
 }

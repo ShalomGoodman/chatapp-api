@@ -8,7 +8,7 @@ module.exports = {
   bootstrap(/* { strapi } */) {
     var io = require("socket.io")(strapi.server.httpServer, {
       cors: {
-        origin: "https://sos-chat-app-frontend-7416e786c22f.herokuapp.com",
+        origin: `${process.env.FRONTEND_URL}`,
         methods: ["GET", "POST"],
         allowedHeaders: ["my-custom-header"],
         credentials: true,
@@ -19,7 +19,7 @@ module.exports = {
       // This holds the username and active chatroom for this connection
       const userState = { username: null, chatroom: null };
 
-      socket.on("join", async ({ username, chatroom }) => {
+      socket.on("join", async ({ username, chatroom, userId }) => {
         if (!username || !chatroom) {
           console.log("Missing username or chatroom for join event");
           return;
@@ -40,11 +40,12 @@ module.exports = {
             users: username,
             socketid: socket.id,
             chatrooms: [chatroom],  // assuming chatroom is the ID of the chatroom
+            account: userId // assuming account is the ID of the user
           },
         };
 
         await axios
-          .post("https://sos-chat-app-backend-ec89bfddc114.herokuapp.com/api/active-users", strapiData)
+          .post(`${process.env.STRAPI_SERVER_URL}/api/active-users`, strapiData)
           .then(async (e) => {
             socket.emit("roomData", { done: "true" });
           })
@@ -54,6 +55,9 @@ module.exports = {
             }
           });
       });
+
+
+      
 
       socket.on("sendMessage", async (data) => {
         const { user, message, chatroom } = data.data; // Extract properties from data.data
@@ -72,7 +76,7 @@ module.exports = {
         };
       
         await axios
-          .post("https://sos-chat-app-backend-ec89bfddc114.herokuapp.com/api/messages", strapiData)
+          .post(`${process.env.STRAPI_SERVER_URL}/api/messages`, strapiData)
           .then((e) => {
             socket.broadcast.to(chatroom).emit("message", {
               user: user,
