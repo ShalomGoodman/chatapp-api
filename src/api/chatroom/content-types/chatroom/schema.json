@@ -27,6 +27,9 @@
     "chat_name": {
       "type": "uid",
       "required": true
+    },
+    "admin": {
+      "type": "string"
     }
   }
 }
